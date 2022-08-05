@@ -1,0 +1,34 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "name": "SSH FS - hass1-netdaemon3",
+      "uri": "ssh://hass1_config_netdaemon3/config/netdaemon3"
+    }
+  ],
+  "settings": {
+    "task.allowAutomaticTasks": "on",
+    "task.slowProviderWarning": true
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "sshfs-publish",
+        "type": "shell",
+        "command": "robocopy '${workspaceFolder}/bin/Debug/net6.0/' 'ssh://hass1_config_netdaemon3/config/netdaemon3' /MIR"
+      },
+      {
+        "label": "Copy to sshfs",
+        "type": "shell",
+        "command": "./scripts/test.sh",
+        "windows": {
+          "command": ".\\scripts\\test.cmd"
+        },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

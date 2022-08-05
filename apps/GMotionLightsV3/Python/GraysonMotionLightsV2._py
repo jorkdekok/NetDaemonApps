@@ -1,0 +1,175 @@
+#
+# App to turn on lights when motion detected
+#
+# Args:
+#
+# hal_gmotionlights:
+#   module: GraysonMotionLights
+#   class: GMotionLights
+#   debug_log: true
+#   motion_sensors:
+#     - binary_sensor.virtual_motion_sensor_101
+#     - binary_sensor.virtual_motion_sensor_102
+#     - binary_sensor.virtual_motion_sensor_202
+#   turn_on_targets:
+#       - light.virtual_hal
+#   turn_off_targets:
+#       - light.virtual_hal
+#   target_state: light.virtual_hal
+#   delay_turn_off: 20
+#
+#
+# Release Notes
+#
+# Version 0.1:
+#   Initial Version
+# import globals
+import appdaemon.plugins.hass.hassapi as hass
+import adbase as ad
+from datetime import datetime, timedelta
+
+# CONSTANTS
+# yaml configuration
+MOTION_SENSORS = "motion_sensors"
+MOTION_DETECTED = "on"
+MOTION_NOT_DETECTED = "off"
+TURN_ON_TARGETS = "turn_on_targets"
+TURN_OFF_TARGETS = "turn_off_targets"
+TARGET_STATE = "target_state"
+DELAY_TURN_OFF = "delay_turn_off"
+# states
+STATE_IDLE = 'idle'
+STATE_MOTION_ON = "motion_on"
+STATE_MOTION_OFF = "motion_off"
+STATE_TIMER_ON = "timer_on"
+STATE_TIMER_OFF = "timer_off"
+STATE_START_TURN_ON = "start_turn_on"
+STATE_TURN_ON = "turn_on"
+STATE_TURN_OFF = "turn_off"
+STATE_START_TURN_OFF = "start_turn_off"
+STATE_END_TURN_OFF = "end_trun_off"
+
+#
+# GMotionLights class v2
+class GMotionLights2(hass.Hass):
+    STATES = (
+        ('idle', 'Idle'),
+        ('motion_detected', 'Motion Detected'),
+        ('motion_dection_ended', 'Motion detection ended'),
+        ('timer_started', 'Timer Started'),
+        ('timer_ended', 'Timer Ended'),
+        ('light_turn_on', 'Light Turn On'),
+        ('light_turn_off_start', 'Light Turn Off - Start'),
+        ('light_turn_off_end', 'Light Turn Off - End'),
+    )
+
+    def initialize(self):
+        self.log("initialize...")
+        try:
+            self.log("Config from yaml: %s", self.args)
+            if MOTION_SENSORS in self.args:
+                for motionsensor in self.args[MOTION_SENSORS]:
+                    if self.entity_exists(motionsensor):
+                        self.listen_state(self.motion_state_on, motionsensor, new=MOTION_DETECTED)
+                        self.listen_state(self.motion_state_off, motionsensor, new=MOTION_NOT_DETECTED)
+                    else:
+                        raise ValueError()
+            # turn_on_targets:
+            self._turn_on_targets = []
+            if TURN_ON_TARGETS in self.args:
+                for turn_on_target in self.args[TURN_ON_TARGETS]:
+                    self._turn_on_targets.append(turn_on_target)
+            # turn_off_targets
+            self._turn_off_targets = []
+            if TURN_OFF_TARGETS in self.args:
+                for turn_off_target in self.args[TURN_OFF_TARGETS]:
+                    self._turn_off_targets.append(turn_off_target)
+            self.motion_on_triggered_by = []
+            self.delay_timer = self.run_in(self.turn_off_callback, 20)
+            self.cancel_timer(self.delay_timer)
+            self.state = STATE_IDLE
+            self.log("OK...Finished intialized")
+        except Exception as e:
+            self.log("Exception raised: %s", e)
+            self.error("Exception raised %s", e)
+            raise
+
+    @ad.app_lock
+    def motion_state_on(self, entity, attribute, old, new, kwargs):
+        try:
+            self.log("Motion detected by %s", entity)
+            if self.timer_running(self.delay_timer) == True:
+                self.log("Cancel delay timer (%s)", self.delay_timer)
+                self.cancel_timer(self.delay_timer)
+            self.state = STATE_MOTION_ON 
+            self._isTargetStateOn = self.get_target_state() == "on"
+            doTurnOnAction = True
+            if doTurnOnAction:
+                # turn on the targets
+                for to_turn_on_target in self._turn_on_targets:
+                    _turn_on_entity_id = self.get_state(to_turn_on_target)
+                    self.log("Turning on the lights: %s", _turn_on_entity_id)
+                    self.turn_on(_turn_on_entity_id)
+                    self.state = STATE_TURN_ON
+        except Exception as e:
+            self.log("Exception raised: %s", e)
+            self.error("Exception raised %s", e)
+            raise
+
+    @ad.app_lock
+    def motion_state_off(self, entity, attribute, old, new, kwargs):
+        try:
+            self.log("Motion stopped by %s", entity)
+            # motion turn off states
+            self.state = STATE_MOTION_OFF
+            # start delay timer
+            if self.state == STATE_MOTION_OFF:
+                delay_value = self.get_delay_value()
+                self.log("start the turn_off_delay timer (%ss)...", delay_value)
+                self.delay_timer = self.run_in(self.turn_off_callback, delay_value, entity = entity)
+                self.state = STATE_TIMER_ON
+        except Exception as e:
+            self.log("Exception raised: %s", e)
+            self.error("Exception raised %s", e)
+            raise
+
+    @ad.app_lock
+    def turn_off_callback(self, kwargs):
+        try:
+            self.log("Turn OFF the lights!")
+            self.state = STATE_TIMER_OFF
+            # remove entity
+            for to_turn_off_target in self._turn_off_targets:
+                device, entity = self.split_entity(to_turn_off_target)
+                if device in ("scene","script"):
+                    # execute script
+                    self.state = STATE_START_TURN_OFF
+                    self.turn_on(to_turn_off_target)
+                    self.state = STATE_END_TURN_OFF
+                elif device in ("scene"):
+                    # scene
+                    _device = self.get_entity(device)
+                    self.call_service("turn_on", transition = 10)
+                else:
+                    self.state = STATE_START_TURN_OFF
+                    self.turn_off(to_turn_off_target)
+                    self.state = STATE_END_TURN_OFF
+            # self.state = "idle"
+            self.state = STATE_TURN_OFF
+        except Exception as e:
+            self.log("Exception raised: %s", e)
+            self.error("Exception raised %s", e)
+            raise
+
+    @ad.app_lock
+    def get_target_state(self):
+        entity_id = self.args[TARGET_STATE]
+        entity_state = self.get_state(entity_id)
+        return entity_state
+
+    @ad.app_lock
+    def get_delay_value(self):
+        entity_id = self.args[DELAY_TURN_OFF]
+        entity_state = self.get_state(entity_id)
+        delay_value = float(entity_state)
+        return delay_value
