@@ -74,12 +74,14 @@ public class GMotionLights3
         }
 
 
-        // Setup MotionTrigger1
+        // Setup MotionTrigger
+        IObservable<TriggerEvent> obs1 = Observable.Empty<TriggerEvent>();
         foreach (var item in sensorsList)
         {
-            subject1 = subject1..Merge(item);
+            obs1 = obs1.Merge(item);
         }
-        IObservable<TriggerEvent> trigger1 = subject1
+        IObservable<TriggerEvent> trigger1 = obs1
+            .MyTimeout1(new TimeSpan(0, 0, 10))
             .Select(u => new TriggerEvent(TriggerStates.Aan))
             .Merge(sensorOff1
                 .Select(u => new TriggerEvent(TriggerStates.Uit))
