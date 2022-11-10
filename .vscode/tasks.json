@@ -24,13 +24,13 @@
         "/consoleloggerparameters:NoSummary"
       ],
       "problemMatcher": "$msCompile"
-    },
-    {
-      "type": "typescript",
-      "tsconfig": "scripts/tsconfig.json",
-      "problemMatcher": ["$tsc"],
-      "group": "build",
-      "label": "tsc: build - scripts/tsconfig.json"
     }
+    // ,{
+    //   "type": "typescript",
+    //   "tsconfig": "scripts/tsconfig.json",
+    //   "problemMatcher": ["$tsc"],
+    //   "group": "build",
+    //   "label": "tsc: build - scripts/tsconfig.json"
+    // }
   ]
 }

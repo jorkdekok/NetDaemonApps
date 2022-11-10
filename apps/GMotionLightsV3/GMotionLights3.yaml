@@ -1,0 +1,25 @@
+GMotionLightsV3.GMotionLightsConfig:
+  - MotionLightRoomConfig:
+      Name: "GML Hal"
+      MotionSensorId1: "binary_sensor.virtual_motion_vsensor_101"
+      MotionSensorId2: ""
+      MotionSensorId3: ""
+      TargetLightId: "light.virtual_vlight_hal"
+      AanTimeoutId: ""
+      AanTimeoutValue: 20
+  - MotionLightRoomConfig:
+      Name: "GML Overloop"
+      MotionSensorId1: "binary_sensor.virtual_motion_vsensor_201"
+      MotionSensorId2: "binary_sensor.virtual_motion_vsensor_202"
+      MotionSensorId3: ""
+      TargetLightId: "light.virtual_vlight_overloop"
+      AanTimeoutId: ""
+      AanTimeoutValue: 20
+  - MotionLightRoomConfig:
+      Name: "GML TrapSlaapkamer"
+      MotionSensorId1: "binary_sensor.virtual_motion_vsensor_301"
+      MotionSensorId2: ""
+      MotionSensorId3: ""
+      TargetLightId: "light.virtual_vlight_trapslaapkamer"
+      AanTimeoutId: ""
+      AanTimeoutValue: 20

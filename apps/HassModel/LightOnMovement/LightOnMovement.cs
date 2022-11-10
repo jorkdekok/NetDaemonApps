@@ -5,7 +5,7 @@ namespace HassModel;
 /// <summary>
 ///     Showcase using the new HassModel API and turn on light on movement
 /// </summary>
-[NetDaemonApp]
+// [NetDaemonApp]
 public class LightOnMovement
 {
     public LightOnMovement(IHaContext ha)

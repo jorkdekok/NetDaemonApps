@@ -6,7 +6,7 @@ namespace HassModel;
 /// <summary>
 ///     Hello world showcase using the new HassModel API
 /// </summary>
-[NetDaemonApp]
+// [NetDaemonApp]
 public class HelloWorldApp
 {
     public HelloWorldApp(IHaContext ha)
