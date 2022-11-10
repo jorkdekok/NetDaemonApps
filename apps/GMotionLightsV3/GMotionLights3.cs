@@ -75,17 +75,17 @@ public class GMotionLights3
 
 
         // Setup MotionTrigger
-        IObservable<TriggerEvent> obs1 = Observable.Empty<TriggerEvent>();
+        IObservable<TriggerEvent> trigger1 = Observable.Return<TriggerEvent>(new TriggerEvent(TriggerStates.Idle) );
         foreach (var item in sensorsList)
         {
-            obs1 = obs1.Merge(item);
+            trigger1 = trigger1.Merge(item);
         }
-        IObservable<TriggerEvent> trigger1 = obs1
-            .MyTimeout1(new TimeSpan(0, 0, 10))
-            .Select(u => new TriggerEvent(TriggerStates.Aan))
-            .Merge(sensorOff1
-                .Select(u => new TriggerEvent(TriggerStates.Uit))
-                );
+        // IObservable<TriggerEvent> trigger1 = obs1
+        //     .MyTimeout1(new TimeSpan(0, 0, 10))
+        //     .Select(u => new TriggerEvent(TriggerStates.Aan))
+        //     .Merge(sensorOff1
+        //         .Select(u => new TriggerEvent(TriggerStates.Uit))
+        //         );
 
         // Setup Aan Timout settings
         TimeSpan aanTimespan = TimeSpan.FromSeconds(10);
