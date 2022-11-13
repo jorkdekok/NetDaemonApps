@@ -64,9 +64,9 @@ public class GMotionLights3
         {
             IObservable<StateChange> sensorOn1, sensorOff1;
             (sensorOn1, sensorOff1) = SetupMotionSensor(currentRoomConfig);
-            var tsubject = subject1.Merge(sensorOn1
-                    .Select(u => new TriggerEvent(TriggerStates.Aan)
-                )).Merge(
+            var tsubject = sensorOn1
+                    .Select(u => new TriggerEvent(TriggerStates.Aan))
+                    .Merge(
                     sensorOff1
                      .Select(u => new TriggerEvent(TriggerStates.Uit)
                 ));
